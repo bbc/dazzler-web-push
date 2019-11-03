@@ -3,7 +3,7 @@ navigator.serviceWorker.register('service-worker.js');
 /**
  * urlBase64ToUint8Array
  * 
- * @param {string} base64String a public vavid key
+ * @param {string} base64String a public vapid key
  */
 function urlBase64ToUint8Array(base64String) {
   var padding = '='.repeat((4 - base64String.length % 4) % 4);

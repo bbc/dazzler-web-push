@@ -3,6 +3,9 @@
 const fs = require('fs');
 const mime = require('mime-types')
 const webPush = require('web-push');
+const aws = require("aws-sdk");
+const sts = new aws.STS();
+const s3 = new aws.S3();
 
 let subscriptions = []
 
@@ -78,7 +81,7 @@ module.exports.registerOrSendToAll = async (event) => {
   // handler, so that they share the same memory and we don't have
   // to setup a database for storing the subscriptions
   // this works for this test, but subscriptions will be deleted
-  // when the lambda cointainer dies
+  // when the lambda container dies
   if (event.resource === '/register') {
     subscriptions.push(JSON.parse(event.body).subscription)
     return response(201, event);
@@ -125,7 +128,71 @@ module.exports.notifyNewOrChanged = async (event) => {
 }
 
 async function handle_appw(message) {
-  console.log('handle_appw', JSON.stringify(message));
+  //console.log('handle_appw', JSON.stringify(message));
+  const path = message.s3.object.key.split("/");
+  let pid = null;
+  let entity_type = null;
+  let doc = null;
+  if(message.s3.bucket.name==='ws-partners-appw-merge-test') {
+    entity_type = path[1];
+    pid = path[2].split('.')[1];
+    const r = await s3.getObject({ Bucket: message.s3.bucket.name, Key: message.s3.object.key }).promise();
+    doc = JSON.parse(r.Body.toString("utf-8"));
+  }
+  else {
+    entity_type = path[4];
+    pid = path[5].split('.')[1];
+    doc = await get_appw(message.s3.bucket.name, message.s3.object.key);
+  }
+  switch (entity_type) {
+    case 'clip':
+    case 'episode':
+      {
+        const entity = doc.pips[entity_type];
+        //console.log(JSON.stringify(entity));
+        if(entity.hasOwnProperty('languages')) {
+          const lang = entity.languages.language[0].$;
+          if(lang===process.env.LANG) {
+            console.log(`new or changed ${entity_type} ${pid}`);
+            await send(subscriptions, JSON.stringify(entity), { TTL: 5 }, 5)
+          }
+        }
+      }
+      break;
+      
+    case 'availability':      // safe to ignore, but should we even be getting them here?
+    case 'brand':
+    case 'series':
+      break;
+      
+    default:
+      console.log(JSON.stringify(doc));
+  }
+}
+
+async function get_appw(bucket, key) {
+  console.log('get_appw', bucket, key);
+  const appw = await sts
+    .assumeRole({
+      RoleArn: process.env.APPW_ROLE,
+      RoleSessionName: "dazzler-test"
+    })
+    .promise();
+
+  const appwS3 = new aws.S3({
+    accessKeyId: appw.Credentials.AccessKeyId,
+    secretAccessKey: appw.Credentials.SecretAccessKey,
+    sessionToken: appw.Credentials.SessionToken
+  });
+  try {
+    const appw_doc = await appwS3
+      .getObject({ Bucket: bucket, Key: key })
+      .promise();
+    return JSON.parse(appw_doc.Body.toString("utf-8"));
+  }
+  catch(error) {
+    return null;
+  }
 }
 
 module.exports.statics = async (event) => {
