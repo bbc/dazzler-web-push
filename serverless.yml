@@ -35,6 +35,11 @@ functions:
           path: sendToAll
           method: post
 
+  notifyNewOrChanged:
+    handler: handler.notifyNewOrChanged
+    events: 
+      - sns: arn:aws:sns:eu-west-1:576677253489:test-ws-appw-merge-isite-OutputTopic-TU2HACJ25UGS
+
   statics:
     handler: handler.statics
     events: 
