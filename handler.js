@@ -1,7 +1,7 @@
 'use strict';
 
 const fs = require('fs');
-const mime = require('mime-types')
+const mime = require('mime-types');
 const webPush = require('web-push');
 const aws = require("aws-sdk");
 const sts = new aws.STS();
@@ -22,13 +22,13 @@ webPush.setVapidDetails(
 function response(statusCode, body, file) {
   let payload = {
     statusCode,
-    body: typeof (body) === 'string' ? body : JSON.stringify(body, null, 2),
-  }
+    body: typeof (body) === 'string' ? body : JSON.stringify(body, null, 2)
+  };
   if (file) {
     payload.headers = { 'content-type': mime.contentType(file) }
   }
-  console.log('RESPOND', payload)
-  return payload
+  console.log('RESPOND', payload);
+  return payload;
 }
 
 module.exports.vapidPublicKey = async () => {
@@ -37,7 +37,7 @@ module.exports.vapidPublicKey = async () => {
 
 module.exports.register = async (event, context) => {
   // Save the registered users subscriptions (event.body)
-  await function addSubscription(JSON.parse(event.body));
+  addSubscription(JSON.parse(event.body));
   return response(201, event);
 }
 
@@ -61,19 +61,19 @@ async function addSubscription(subscription) {
 // TODO remove stale subscriptions 
 
 function send(subscriptions, payload, options, delay) {
-  console.log('send', subscriptions, payload, options, delay)
+  console.log('send', subscriptions, payload, options, delay);
 
   return new Promise((success) => {
     setTimeout(() => {
 
       Promise.all(subscriptions.map((each_subscription) => {
-        return webPush.sendNotification(each_subscription, payload, options)
+        return webPush.sendNotification(each_subscription, payload, options);
       }))
         .then(function () {
-          success(response(201, {}))
+          success(response(201, {}));
         }).catch(function (error) {
           console.log('ERROR>', error);
-          success(response(500, { error: error }))
+          success(response(500, { error: error }));
         })
 
     }, 1000 * parseInt(delay))
@@ -81,8 +81,8 @@ function send(subscriptions, payload, options, delay) {
 }
 
 module.exports.sendNotification = async (event) => {
-  console.log('register event', JSON.stringify(event, null, 2))
-  let body = JSON.parse(event.body)
+  console.log('register event', JSON.stringify(event, null, 2));
+  let body = JSON.parse(event.body);
   const subscription = body.subscription;
   const payload = body.payload;
   const delay = body.delay;
@@ -90,24 +90,24 @@ module.exports.sendNotification = async (event) => {
     TTL: body.ttl | 5
   };
 
-  return await send([subscription], payload, options, delay)
+  return await send([subscription], payload, options, delay);
 }
 
 module.exports.registerOrSendToAll = async (event) => {
   if (event.resource === '/register') {
-    await addSubscription(JSON.parse(event.body).subscription)
+    await addSubscription(JSON.parse(event.body).subscription);
     return response(201, event);
   } else {
-    console.log('register event', JSON.stringify(event, null, 2))
-    let body = JSON.parse(event.body)
-    console.log('got body', body)
+    console.log('register event', JSON.stringify(event, null, 2));
+    let body = JSON.parse(event.body);
+    console.log('got body', body);
     const payload = body.payload;
     const delay = body.delay;
     const options = {
       TTL: body.ttl | 5
     };
     const subscriptions = await getSubscriptions();
-    return await send(subscriptions, payload, options, delay)
+    return await send(subscriptions, payload, options, delay);
   }
 
 }
@@ -211,6 +211,6 @@ async function get_appw(bucket, key) {
 
 module.exports.statics = async (event) => {
   // Serve static files from lambda (only for simplicity of this example)
-  var file = fs.readFileSync(`./static${event.resource}`)
-  return await response(200, file.toString(), event.resource.split('/')[1])
+  var file = fs.readFileSync(`./static${event.resource}`);
+  return await response(200, file.toString(), event.resource.split('/')[1]);
 }
