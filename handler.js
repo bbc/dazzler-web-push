@@ -25,7 +25,7 @@ function response(statusCode, body, file) {
     body: typeof (body) === 'string' ? body : JSON.stringify(body, null, 2)
   };
   if (file) {
-    payload.headers = { 'content-type': mime.contentType(file) }
+    payload.headers = { 'content-type': mime.contentType(file) };
   }
   console.log('RESPOND', payload);
   return payload;
@@ -33,22 +33,22 @@ function response(statusCode, body, file) {
 
 module.exports.vapidPublicKey = async () => {
   return response(200, process.env.VAPID_PUBLIC_KEY);
-}
+};
 
 module.exports.register = async (event, context) => {
   // Save the registered users subscriptions (event.body)
   addSubscription(JSON.parse(event.body));
   return response(201, event);
-}
+};
 
 async function getSubscriptions() {
   const s = await s3.getObject({ Bucket: process.env.STATE_BUCKET, Key: 'subscriptions'}).promise();
-  return JSON.parse(s);
+  return JSON.parse(s.Body.toString("utf-8"));
 }
 
 async function addSubscription(subscription) {
   let subscriptions = getSubscriptions();
-  subscriptions.push(subscription)
+  subscriptions.push(subscription);
   await s3.putObject({
     Bucket: process.env.STATE_BUCKET,
     Key: 'subscriptions',
@@ -74,10 +74,10 @@ function send(subscriptions, payload, options, delay) {
         }).catch(function (error) {
           console.log('ERROR>', error);
           success(response(500, { error: error }));
-        })
+        });
 
-    }, 1000 * parseInt(delay))
-  })
+    }, 1000 * parseInt(delay));
+  });
 }
 
 module.exports.sendNotification = async (event) => {
@@ -91,7 +91,7 @@ module.exports.sendNotification = async (event) => {
   };
 
   return await send([subscription], payload, options, delay);
-}
+};
 
 module.exports.registerOrSendToAll = async (event) => {
   if (event.resource === '/register') {
@@ -110,7 +110,7 @@ module.exports.registerOrSendToAll = async (event) => {
     return await send(subscriptions, payload, options, delay);
   }
 
-}
+};
 
 module.exports.notifyNewOrChanged = async (event) => {
   //console.log('Received event:', JSON.stringify(event));
@@ -138,7 +138,7 @@ module.exports.notifyNewOrChanged = async (event) => {
     }
   }
   return `Successfully processed ${event.Records.length} messages.`;
-}
+};
 
 async function handle_appw(message) {
   //console.log('handle_appw', JSON.stringify(message));
@@ -213,4 +213,4 @@ module.exports.statics = async (event) => {
   // Serve static files from lambda (only for simplicity of this example)
   var file = fs.readFileSync(`./static${event.resource}`);
   return await response(200, file.toString(), event.resource.split('/')[1]);
-}
+};
