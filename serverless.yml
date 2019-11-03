@@ -12,6 +12,7 @@ provider:
     VAPID_PUBLIC_KEY: BLpTsaEAy-BGQnkZ1DeFYYNS6EH1gWP-cP49n9NmbWtjkSVMJQjj-wVI0tapfsK7Ju9r0VQz7jpE9kf8BETAdns
     VAPID_PRIVATE_KEY: LtWhacMtRs63fhABUUMLOynMRTKTffIf7oQuRpwChFc
     APPW_ROLE: arn:aws:iam::746161738563:role/client-access-appw-cd-live
+    STATE_BUCKET: dazzler-test-meta
     LANG: mr
 
 functions:
