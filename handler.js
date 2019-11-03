@@ -96,6 +96,38 @@ module.exports.registerOrSendToAll = async (event) => {
 
 }
 
+module.exports.notifyNewOrChanged = async (event) => {
+  //console.log('Received event:', JSON.stringify(event));
+  let message = null;
+  for (let i = 0; i < event.Records.length; i++) {
+    const r = event.Records[i];
+    switch (r.EventSource) {
+      case 'aws:sns':
+        message = JSON.parse(r.Sns.Message);
+        if (message.hasOwnProperty("Records")) {
+          const r = message.Records[0];
+          if(r.s3.object.key.startsWith('schedule')) {
+            console.log(r.s3.object.key);
+          }
+          else {
+            await handle_appw(r);
+          }
+        }
+        else {
+          console.log('unrecognised SNS message',message);
+        }
+        break;
+      default:
+      	console.log('Received unknown event:', JSON.stringify(r));
+    }
+  }
+  return `Successfully processed ${event.Records.length} messages.`;
+}
+
+async function handle_appw(message) {
+  console.log('handle_appw', JSON.stringify(message));
+}
+
 module.exports.statics = async (event) => {
   // Serve static files from lambda (only for simplicity of this example)
   var file = fs.readFileSync(`./static${event.resource}`)
