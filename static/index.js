@@ -20,6 +20,12 @@ function urlBase64ToUint8Array(base64String) {
   return outputArray;
 }
 
+navigator.serviceWorker.addEventListener('message', event => {
+  console.log(event.data.msg, event.data.url);
+  let div = document.createElement('div');
+  div.innerHTML = event;
+});
+
 navigator.serviceWorker.ready
   .then(function (registration) {
     return registration.pushManager.getSubscription()
