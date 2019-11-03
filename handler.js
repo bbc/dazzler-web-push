@@ -49,11 +49,15 @@ async function getSubscriptions() {
 async function addSubscription(subscription) {
   let subscriptions = await getSubscriptions();
   console.log(subscriptions);
-  subscriptions.push(subscription);
+  let uniq = {};
+  for(let i=0; i<subscriptions.length; i++){
+    uniq[subscriptions[i].endpoint] = subscriptions[i];
+  }
+  uniq[subscription.endpoint] = subscription; // use latest for endpoint
   await s3.putObject({
     Bucket: process.env.STATE_BUCKET,
     Key: 'subscriptions',
-    Body: JSON.stringify(subscriptions),
+    Body: JSON.stringify(Object.values(uniq)),
     ContentType: 'application/json'
   }).promise();
 }
@@ -62,12 +66,13 @@ async function addSubscription(subscription) {
 
 function send(subscriptions, payload, options, delay) {
   console.log('send', subscriptions, payload, options, delay);
+  const payload_string = typeof (payload) === 'string' ? payload : JSON.stringify(payload)
 
   return new Promise((success) => {
     setTimeout(() => {
 
       Promise.all(subscriptions.map((each_subscription) => {
-        return webPush.sendNotification(each_subscription, payload, options);
+        return webPush.sendNotification(each_subscription, payload_string, options);
       }))
         .then(function () {
           success(response(201, {}));
@@ -166,9 +171,15 @@ async function handle_appw(message) {
         if(entity.hasOwnProperty('languages')) {
           const lang = entity.languages.language[0].$;
           if(lang===process.env.LANG) {
+            const payload = {
+              msg: `new or changed ${entity_type} ${pid}`,
+              pid: pid,
+              entity_type: entity_type,
+              entity: entity
+            };
             console.log(`new or changed ${entity_type} ${pid}`);
             const subscriptions = await getSubscriptions();
-            await send(subscriptions, JSON.stringify(entity), { TTL: 5 }, 0);
+            await send(subscriptions, payload, { TTL: 5 }, 0);
           }
         }
       }

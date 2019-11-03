@@ -21,9 +21,14 @@ function urlBase64ToUint8Array(base64String) {
 }
 
 navigator.serviceWorker.addEventListener('message', event => {
-  console.log(event.data.msg, event.data.url);
-  let div = document.createElement('div');
-  div.innerHTML = event;
+  const n = event.data
+  console.log(n.msg);
+  if(n.hasOwnProperty('entity')) {
+    const display = `${n.entity_type} ${n.pid} ${JSON.stringify(n.entity)}`;
+    let div = document.createElement('div');
+    div.innerHTML = display;
+    document.body.append(div);
+  }
 });
 
 navigator.serviceWorker.ready
@@ -59,9 +64,9 @@ navigator.serviceWorker.ready
     });
 
     document.getElementById('doIt').onclick = function () {
-      const payload = 'Hola!'
-      const delay = '5'
-      const ttl = '5'
+      const payload = { msg: 'Hola!' };
+      const delay = '5';
+      const ttl = '5';
       fetch('./sendNotification', {
         method: 'post',
         headers: {
@@ -83,7 +88,7 @@ navigator.serviceWorker.ready
           'Content-type': 'application/json'
         },
         body: JSON.stringify({
-          payload: 'SEND TEXT TO ALL',
+          payload: { msg: 'SEND TEXT TO ALL' },
           delay: 0,
         }),
       });
