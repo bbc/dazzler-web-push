@@ -26,3 +26,4 @@ AWSLambdaFullAccess, AmazonAPIGatewayPushToCloudWatchLogs, CloudWatchLogsFullAcc
 ```
 - Open `index.html` path
 
+Note - I had to add the lambda basic execution policy to the static server lambda but that might have been a problem with earlier permissions on the default user.
