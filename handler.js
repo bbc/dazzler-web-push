@@ -7,8 +7,6 @@ const aws = require("aws-sdk");
 const sts = new aws.STS();
 const s3 = new aws.S3();
 
-let subscriptions = []
-
 if (!process.env.VAPID_PUBLIC_KEY || !process.env.VAPID_PRIVATE_KEY) {
   console.log("You must set the VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY " +
     "environment variables. You can use the following ones:");
@@ -39,9 +37,28 @@ module.exports.vapidPublicKey = async () => {
 
 module.exports.register = async (event, context) => {
   // Save the registered users subscriptions (event.body)
-  subscriptions.push(JSON.parse(event.body))
+  await function addSubscription(JSON.parse(event.body));
   return response(201, event);
 }
+
+async function getSubscriptions() {
+  const s = await s3.getObject({ Bucket: process.env.STATE_BUCKET, Key: 'subscriptions'}).promise();
+  return JSON.parse(s);
+}
+
+async function addSubscription(subscription) {
+  let subscriptions = getSubscriptions();
+  subscriptions.push(subscription)
+  await s3.putObject({
+    Bucket: process.env.STATE_BUCKET,
+    Key: 'subscriptions',
+    Body: JSON.stringify(subscriptions),
+    ContentType: 'application/json'
+  }).promise();
+  return response(201, event);
+}
+
+// TODO remove stale subscriptions 
 
 function send(subscriptions, payload, options, delay) {
   console.log('send', subscriptions, payload, options, delay)
@@ -77,13 +94,8 @@ module.exports.sendNotification = async (event) => {
 }
 
 module.exports.registerOrSendToAll = async (event) => {
-  // these two functions (register and SendtoAll) are in the same
-  // handler, so that they share the same memory and we don't have
-  // to setup a database for storing the subscriptions
-  // this works for this test, but subscriptions will be deleted
-  // when the lambda container dies
   if (event.resource === '/register') {
-    subscriptions.push(JSON.parse(event.body).subscription)
+    await addSubscription(JSON.parse(event.body).subscription)
     return response(201, event);
   } else {
     console.log('register event', JSON.stringify(event, null, 2))
@@ -94,6 +106,7 @@ module.exports.registerOrSendToAll = async (event) => {
     const options = {
       TTL: body.ttl | 5
     };
+    const subscriptions = await getSubscriptions();
     return await send(subscriptions, payload, options, delay)
   }
 
@@ -154,7 +167,8 @@ async function handle_appw(message) {
           const lang = entity.languages.language[0].$;
           if(lang===process.env.LANG) {
             console.log(`new or changed ${entity_type} ${pid}`);
-            await send(subscriptions, JSON.stringify(entity), { TTL: 5 }, 5)
+            const subscriptions = await getSubscriptions();
+            await send(subscriptions, JSON.stringify(entity), { TTL: 5 }, 0);
           }
         }
       }
