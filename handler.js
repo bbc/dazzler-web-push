@@ -43,7 +43,6 @@ module.exports.register = async (event, context) => {
 
 async function getSubscriptions() {
   const s = await s3.getObject({ Bucket: process.env.STATE_BUCKET, Key: 'subscriptions'}).promise();
-  console.log(s);
   return JSON.parse(s.Body.toString("utf-8"));
 }
 
@@ -57,7 +56,6 @@ async function addSubscription(subscription) {
     Body: JSON.stringify(subscriptions),
     ContentType: 'application/json'
   }).promise();
-  return response(201, event);
 }
 
 // TODO remove stale subscriptions 
