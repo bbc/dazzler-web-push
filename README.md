@@ -11,6 +11,9 @@ Serverless adaptation of the [Web API (Push Payload) Demo](https://serviceworke.
 
 - Install and authenticate [aws-cli](https://aws.amazon.com/cli/)  
 - Install and configure [Serverless](https://serverless.com/)
+- Make sure the aws cli default user has at least the following permissions:
+
+AWSLambdaFullAccess, AmazonAPIGatewayPushToCloudWatchLogs, CloudWatchLogsFullAccess, AmazonAPIGatewayAdministrator, IAMReadOnlyAccess, AWSCloudFormationFullAccess, iam:CreateRole, iam:PutRolePolicy", iam:DeleteRole, iam:DeleteRolePolicy
 
 ## Deployment
 
