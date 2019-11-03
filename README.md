@@ -1,4 +1,4 @@
-# serverless-web-push
+# dazzler-web-push
 
 Serverless implementation of the [Web API (Push Payload) Demo](https://serviceworke.rs/push-payload_demo.html) using **Serverless framework** and **AWS Lambda**
 
