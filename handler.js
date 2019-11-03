@@ -37,17 +37,19 @@ module.exports.vapidPublicKey = async () => {
 
 module.exports.register = async (event, context) => {
   // Save the registered users subscriptions (event.body)
-  addSubscription(JSON.parse(event.body));
+  await addSubscription(JSON.parse(event.body));
   return response(201, event);
 };
 
 async function getSubscriptions() {
   const s = await s3.getObject({ Bucket: process.env.STATE_BUCKET, Key: 'subscriptions'}).promise();
+  console.log(s);
   return JSON.parse(s.Body.toString("utf-8"));
 }
 
 async function addSubscription(subscription) {
-  let subscriptions = getSubscriptions();
+  let subscriptions = await getSubscriptions();
+  console.log(subscriptions);
   subscriptions.push(subscription);
   await s3.putObject({
     Bucket: process.env.STATE_BUCKET,
