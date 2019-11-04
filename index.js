@@ -96,7 +96,7 @@ async function handle_appw(message) {
         //console.log(JSON.stringify(entity));
         if(entity.hasOwnProperty('languages')) {
           const lang = entity.languages.language[0].$;
-          if(lang===process.env.LANG) {
+          if(process.env.LANGUAGES.includes(lang)) {
             // `https://api.live.bbc.co.uk/pips/api/v1/clip/pid.${pid}/versions/`
             const payload = {
               msg: `new or changed ${entity_type} ${pid}`,

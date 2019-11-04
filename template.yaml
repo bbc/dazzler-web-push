@@ -2,14 +2,18 @@ AWSTemplateFormatVersion: 2010-09-09
 Transform: 'AWS::Serverless-2016-10-31'
 Description: publish media files
 Resources:
-  dazzler-web-push:
+  dazzlerWebpush:
     Type: 'AWS::Serverless::Function'
     Properties:
       Handler: index.handler
       Runtime: nodejs8.10
       InlineCode: 'exports.handler = function(event,context){}'
       Description: notify Dazzler edit of new clips and episodes
-      FunctionName: dazzler-web-push
+      FunctionName: 
+        'Fn::Join':
+          - '-'
+          - - dazzler-web-push
+            - !Ref Environment
       MemorySize: !Ref LambdaMemorySize
       Timeout: !Ref LambdaTimeout
       Events:
@@ -27,7 +31,7 @@ Resources:
           DOMAIN: !Ref Domain
           VAPID_PUBLIC_KEY: !Ref VapidPublicKey
           VAPID_PRIVATE_KEY: !Ref VapidPrivateKey
-          LANG: !Ref Lang
+          LANGUAGES: !Ref Languages
           APPW_ROLE: !Ref APPWRole
           STATE_BUCKET: !FindInMap 
             - OperationsMap
@@ -59,7 +63,7 @@ Resources:
     Type: 'AWS::Lambda::Alias'
     Properties:
       FunctionVersion: $LATEST
-      FunctionName: !Ref dazzler-web-push
+      FunctionName: !Ref dazzlerWebpush
       Name: !Ref Environment
 Parameters:
   Environment:
@@ -73,18 +77,18 @@ Parameters:
   APPWRole:
     Default: arn:aws:iam::746161738563:role/client-access-appw-cd-live
     Type: String
-  VapidPublicKey
+  VapidPublicKey:
     Description: notifications public key
     Type: String
     Default: BLpTsaEAy-BGQnkZ1DeFYYNS6EH1gWP-cP49n9NmbWtjkSVMJQjj-wVI0tapfsK7Ju9r0VQz7jpE9kf8BETAdns
-  VapidPrivateKey
+  VapidPrivateKey:
     Description: notifications private key
     Type: String
     Default: LtWhacMtRs63fhABUUMLOynMRTKTffIf7oQuRpwChFc
-  Lang
-    Description: two letter language code e.g. mr for Marathi
+  Languages:
+    Description: list of two letter language codes e.g. mr for Marathi
     Type: String
-    Default: 'mr'
+    Default: mr
   LambdaTimeout:
     Default: '30'
     Type: Number
