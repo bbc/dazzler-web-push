@@ -24,7 +24,17 @@ navigator.serviceWorker.addEventListener('message', event => {
   const n = event.data
   console.log(n.msg);
   if(n.hasOwnProperty('entity')) {
-    const display = `${n.entity_type} ${n.pid} ${JSON.stringify(n.entity)}`;
+    const title = '';
+    if(n.entity.hasOwnProperty('title') && n.entity.title.hasOwnProperty('$')) {
+      title = n.entity.title.$;
+    }
+    else if(n.entity.hasOwnProperty('presentation_title') && n.entity.presentation_title.hasOwnProperty('$')) {
+      title = n.entity.presentation_title.$;
+    }
+    else {
+      title = '(no title)';
+    }
+    const display = `${n.entity_type} ${n.pid} ${title}`;
     let div = document.createElement('div');
     div.innerHTML = display;
     document.body.append(div);
