@@ -1,0 +1,99 @@
+AWSTemplateFormatVersion: 2010-09-09
+Transform: 'AWS::Serverless-2016-10-31'
+Description: publish media files
+Resources:
+  dazzler-web-push:
+    Type: 'AWS::Serverless::Function'
+    Properties:
+      Handler: index.handler
+      Runtime: nodejs8.10
+      InlineCode: 'exports.handler = function(event,context){}'
+      Description: notify Dazzler edit of new clips and episodes
+      FunctionName: dazzler-web-push
+      MemorySize: !Ref LambdaMemorySize
+      Timeout: !Ref LambdaTimeout
+      Events:
+        SNS1:
+          Type: SNS
+          Properties:
+            Topic: !ImportValue
+              'Fn::Join':
+                - '-'
+                - - !Ref Environment
+                  - mesh2topic
+                  - GoodUploadTopic
+      Environment:
+        Variables:
+          DOMAIN: !Ref Domain
+          VAPID_PUBLIC_KEY: !Ref VapidPublicKey
+          VAPID_PRIVATE_KEY: !Ref VapidPrivateKey
+          LANG: !Ref Lang
+          APPW_ROLE: !Ref APPWRole
+          STATE_BUCKET: !FindInMap 
+            - OperationsMap
+            - BucketMap
+            - !Ref Environment
+      Policies:
+        - Statement:
+            - Action: 'sts:AssumeRole'
+              Effect: Allow
+              Resource: !FindInMap 
+                - OperationsMap
+                - AppwMap
+                - !Ref Environment
+        - S3ReadPolicy:
+            BucketName: !FindInMap 
+              - OperationsMap
+              - BucketMap
+              - !Ref Environment
+        - S3ReadPolicy:
+            BucketName: !FindInMap 
+              - OperationsMap
+              - AppeExtensionMap
+              - !Ref Environment
+  AliasForLambda:
+    Type: 'AWS::Lambda::Alias'
+    Properties:
+      FunctionVersion: $LATEST
+      FunctionName: !Ref dazzler-web-push
+      Name: !Ref Environment
+Parameters:
+  Environment:
+    Default: test
+    Type: String
+    ConstraintDescription: must be test or live
+    Description: The deployment environment
+    AllowedValues:
+      - live
+      - test
+  APPWRole:
+    Default: arn:aws:iam::746161738563:role/client-access-appw-cd-live
+    Type: String
+  VapidPublicKey
+    Description: notifications public key
+    Type: String
+  VapidPrivateKey
+    Description: notifications private key
+    Type: String
+  Lang
+    Description: two letter language code e.g. mr for Marathi
+    Type: String
+    Default: 'mr'
+  LambdaTimeout:
+    Default: '30'
+    Type: Number
+    Description: >-
+      The function execution time (in seconds) after which Lambda terminates the
+      function. 
+  LambdaMemorySize:
+    Default: '128'
+    Type: Number
+    Description: 'The amount of memory, in MB, that is allocated to your Lambda function.'
+Mappings:
+  OperationsMap:
+    BucketMap:
+      test: test-galileo-interface-mt-resources-inputbucket-3z3olim0ng99
+      live: live-galileo-interface-mt-resources-inputbucket-5nfo4tjd8049
+    GalileoImageBucketMap:
+      test: test-galileo-interface-mt-resources-imageinbucket-m8d3sp4bi46v
+      live: live-galileo-interface-mt-resources-imageinbucket-1c75d9gp89b85
