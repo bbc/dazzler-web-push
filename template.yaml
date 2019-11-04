@@ -33,6 +33,10 @@ Resources:
             - OperationsMap
             - BucketMap
             - !Ref Environment
+          APPW_EXTENSION_BUCKET: !FindInMap 
+            - OperationsMap
+            - AppwExtensionMap
+            - !Ref Environment
       Policies:
         - Statement:
             - Action: 'sts:AssumeRole'
@@ -49,7 +53,7 @@ Resources:
         - S3ReadPolicy:
             BucketName: !FindInMap 
               - OperationsMap
-              - AppeExtensionMap
+              - AppwExtensionMap
               - !Ref Environment
   AliasForLambda:
     Type: 'AWS::Lambda::Alias'
@@ -72,9 +76,11 @@ Parameters:
   VapidPublicKey
     Description: notifications public key
     Type: String
+    Default: BLpTsaEAy-BGQnkZ1DeFYYNS6EH1gWP-cP49n9NmbWtjkSVMJQjj-wVI0tapfsK7Ju9r0VQz7jpE9kf8BETAdns
   VapidPrivateKey
     Description: notifications private key
     Type: String
+    Default: LtWhacMtRs63fhABUUMLOynMRTKTffIf7oQuRpwChFc
   Lang
     Description: two letter language code e.g. mr for Marathi
     Type: String
@@ -92,8 +98,8 @@ Parameters:
 Mappings:
   OperationsMap:
     BucketMap:
-      test: test-galileo-interface-mt-resources-inputbucket-3z3olim0ng99
-      live: live-galileo-interface-mt-resources-inputbucket-5nfo4tjd8049
-    GalileoImageBucketMap:
-      test: test-galileo-interface-mt-resources-imageinbucket-m8d3sp4bi46v
-      live: live-galileo-interface-mt-resources-imageinbucket-1c75d9gp89b85
+      test: dazzler-test-meta
+      live: dazzler-meta
+    AppwExtensionMap:
+      test: ws-partners-appw-merge-test
+      live: ws-partners-appw-merge

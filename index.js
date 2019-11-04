@@ -77,7 +77,7 @@ async function handle_appw(message) {
   let pid = null;
   let entity_type = null;
   let doc = null;
-  if(message.s3.bucket.name==='ws-partners-appw-merge-test') {
+  if(message.s3.bucket.name === process.env.APPW_EXTENSION_BUCKET) {
     entity_type = path[1];
     pid = path[2].split('.')[1];
     const r = await s3.getObject({ Bucket: message.s3.bucket.name, Key: message.s3.object.key }).promise();
