@@ -24,7 +24,7 @@ navigator.serviceWorker.addEventListener('message', event => {
   const n = event.data
   console.log(n.msg);
   if(n.hasOwnProperty('entity')) {
-    const title = '';
+    let title = '';
     if(n.entity.hasOwnProperty('title') && n.entity.title.hasOwnProperty('$')) {
       title = n.entity.title.$;
     }
