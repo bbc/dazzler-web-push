@@ -6,7 +6,7 @@ Resources:
     Type: 'AWS::Serverless::Function'
     Properties:
       Handler: index.handler
-      Runtime: nodejs8.10
+      Runtime: nodejs12.x
       InlineCode: 'exports.handler = function(event,context){}'
       Description: notify Dazzler edit of new clips and episodes
       FunctionName: 
@@ -20,18 +20,15 @@ Resources:
         SNS1:
           Type: SNS
           Properties:
-            Topic: !ImportValue
-              'Fn::Join':
-                - '-'
-                - - !Ref Environment
-                  - mesh2topic
-                  - GoodUploadTopic
+            Topic: !FindInMap
+              - OperationsMap
+              - TopicMap
+              - !Ref Environment
       Environment:
         Variables:
           DOMAIN: !Ref Domain
           VAPID_PUBLIC_KEY: !Ref VapidPublicKey
           VAPID_PRIVATE_KEY: !Ref VapidPrivateKey
-          LANGUAGES: !Ref Languages
           APPW_ROLE: !Ref APPWRole
           STATE_BUCKET: !FindInMap 
             - OperationsMap
@@ -45,10 +42,7 @@ Resources:
         - Statement:
             - Action: 'sts:AssumeRole'
               Effect: Allow
-              Resource: !FindInMap 
-                - OperationsMap
-                - AppwMap
-                - !Ref Environment
+              Resource: !Ref APPWRole
         - S3ReadPolicy:
             BucketName: !FindInMap 
               - OperationsMap
@@ -77,6 +71,10 @@ Parameters:
   APPWRole:
     Default: arn:aws:iam::746161738563:role/client-access-appw-cd-live
     Type: String
+  Domain:
+    Description: needed by VAPID
+    Type: String
+    Default: bbc.com
   VapidPublicKey:
     Description: notifications public key
     Type: String
@@ -85,10 +83,6 @@ Parameters:
     Description: notifications private key
     Type: String
     Default: LtWhacMtRs63fhABUUMLOynMRTKTffIf7oQuRpwChFc
-  Languages:
-    Description: list of two letter language codes e.g. mr for Marathi
-    Type: String
-    Default: mr
   LambdaTimeout:
     Default: '30'
     Type: Number
@@ -102,8 +96,11 @@ Parameters:
 Mappings:
   OperationsMap:
     BucketMap:
-      test: dazzler-test-meta
-      live: dazzler-meta
+      test: ws-dazzler-assets-test
+      live: ws-dazzler-assets
     AppwExtensionMap:
       test: ws-partners-appw-merge-test
       live: ws-partners-appw-merge
+    TopicMap:
+      test: arn:aws:sns:eu-west-1:576677253489:test-ws-appw-merge-isite-OutputTopic-TU2HACJ25UGS
+      live: TBD

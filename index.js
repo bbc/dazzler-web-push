@@ -11,6 +11,8 @@ webPush.setVapidDetails(
   process.env.VAPID_PRIVATE_KEY
 );
 
+const map = { mr: 'bbc_marathi_tv', hi: 'bbc_hindi_tv' };
+
 exports.handler = async event => {
   //console.log('Received event:', JSON.stringify(event));
   let message = null;
@@ -48,8 +50,8 @@ function response(statusCode, body) {
   return payload;
 }
 
-async function getSubscriptions() {
-  const s = await s3.getObject({ Bucket: process.env.STATE_BUCKET, Key: 'subscriptions'}).promise();
+async function getSubscriptions(sid) {
+  const s = await s3.getObject({ Bucket: process.env.STATE_BUCKET, Key: `${sid}/subscriptions`}).promise();
   return JSON.parse(s.Body.toString("utf-8"));
 }
 
@@ -94,10 +96,9 @@ async function handle_appw(message) {
       {
         const entity = doc.pips[entity_type];
         //console.log(JSON.stringify(entity));
-        if(entity.hasOwnProperty('languages')) {
+        if(entity.languages) {
           const lang = entity.languages.language[0].$;
-          if(process.env.LANGUAGES.includes(lang)) {
-            // `https://api.live.bbc.co.uk/pips/api/v1/clip/pid.${pid}/versions/`
+          if(map.lang) {
             const payload = {
               msg: `new or changed ${entity_type} ${pid}`,
               pid: pid,
@@ -105,7 +106,7 @@ async function handle_appw(message) {
               entity: entity
             };
             console.log(`new or changed ${entity_type} ${pid}`);
-            const subscriptions = await getSubscriptions();
+            const subscriptions = await getSubscriptions(map[lang]);
             await send(subscriptions, payload, { TTL: 5 }, 0);
           }
         }
